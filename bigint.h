@@ -21,11 +21,13 @@ void bigint_copy(BigInt dst, BigInt src);
 void bigint_destroy(BigInt bigint);
 
 void print_bigint_limbs(BigInt bigint);
+void print_bigint_limbs_binary(BigInt bigint);
 char* bigint_to_str(BigInt bigint);
 
 void zero_bigint(BigInt bigint);
 void positive_one_bigint(BigInt bigint);
 
+void bigint_negate(BigInt bigint);
 int bigint_sign(BigInt bigint);
 int bigint_is_zero(BigInt bigint);
 
@@ -46,6 +48,9 @@ void bigint_sub(BigInt rop, BigInt op1, BigInt op2);
 
 void bigint_mul_uint32(BigInt rop, BigInt op1, uint32_t op2);
 void bigint_mul(BigInt rop, BigInt op1, BigInt op2);
+
+void bigint_shift_left(BigInt rop, BigInt op1, uint32_t bit_c);
+void bigint_shift_right(BigInt rop, BigInt op1, uint32_t bit_c);
 
 void bigint_div_uint32(BigInt quotient, BigInt remainder, BigInt op1, uint32_t op2);
 void bigint_div(BigInt quotient, BigInt remainder, BigInt op1, BigInt op2);
