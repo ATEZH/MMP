@@ -267,6 +267,9 @@ void bigint_abs_sub_uint32(BigInt *rop, const BigInt *op1, uint32_t op2) {
             rop->limbs[i] = op1->limbs[i];
         }
     }
+    if (rop->limbs[rop->size - 1] == 0 && rop->size > 1) {
+        rop->size--;
+    }
 }
 
 void bigint_add_uint32(BigInt *rop, const BigInt *op1, uint32_t op2) {
@@ -856,11 +859,12 @@ void print_bigint_limbs(const BigInt *bigint) {
 
 void print_bigint_limbs_binary(const BigInt *bigint) {
     assert(bigint != NULL);
-    for (int i = bigint->size - 1; i >= 1; --i) {
+    for (int i = bigint->size - 1; i >= 0; --i) {
         uint32_t l = bigint->limbs[i];
         printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN" ",
                BYTE_TO_BINARY(l >> 24), BYTE_TO_BINARY(l >> 16), BYTE_TO_BINARY(l >> 8), BYTE_TO_BINARY(l));
     }
+    printf("\n");
 }
 
 char *bigint_to_str(const BigInt *bigint) {
