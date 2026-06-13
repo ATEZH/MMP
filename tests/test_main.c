@@ -1,25 +1,22 @@
-#include "../bigint.h"
-
+#include <assert.h>
+#include <gmp.h>
+#include <process.h>
+#include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <assert.h>
-#include <stdint.h>
-#include <gmp.h>
-#include <stdarg.h>
-#include <process.h>
 
+#include "../bigint.h"
 
 #ifndef ITER
 #define ITER 50000
 #endif
 
-
 #ifndef MAX_BITS
-#define MAX_BITS 320
+#define MAX_BITS 1024
 #endif
-
 
 static void failf(const char *fmt, ...) {
     va_list ap;
@@ -29,11 +26,7 @@ static void failf(const char *fmt, ...) {
     exit(EXIT_FAILURE);
 }
 
-
-static char *mpz_to_str_dec(mpz_t z) {
-    return mpz_get_str(NULL, 10, z);
-}
-
+static char *mpz_to_str_dec(mpz_t z) { return mpz_get_str(NULL, 10, z); }
 
 static BigInt *bigint_from_mpz(mpz_t z) {
     char *s = mpz_to_str_dec(z);
@@ -42,20 +35,14 @@ static BigInt *bigint_from_mpz(mpz_t z) {
     return b;
 }
 
-
-
 static void check_invariants(BigInt *b) {
     if (b == NULL) failf("Invariant failure: BigInt *pointer NULL\n");
     if (b->size < 1) failf("Invariant failure: size < 1 (%d)\n", b->size);
     if (b->capacity < b->size) failf("Invariant failure: capacity < size (%d < %d)\n", b->capacity, b->size);
     if (b->capacity < 16) failf("Invariant failure: capacity < 16 (%d)\n", b->capacity);
-    if (b->size > 1 && b->limbs[b->size - 1] == 0)
-        failf("Invariant failure: top limb zero for size > 1\n");
-    if (!(b->sign == 1 || b->sign == -1))
-        failf("Invariant failure: sign not 1 or -1 (%d)\n", b->sign);
+    if (b->size > 1 && b->limbs[b->size - 1] == 0) failf("Invariant failure: top limb zero for size > 1\n");
+    if (!(b->sign == 1 || b->sign == -1)) failf("Invariant failure: sign not 1 or -1 (%d)\n", b->sign);
 }
-
-
 
 static int compare_bigint_mpz(BigInt *b, mpz_t z) {
     char *s_gmp = mpz_to_str_dec(z);
@@ -69,7 +56,6 @@ static int compare_bigint_mpz(BigInt *b, mpz_t z) {
     return eq;
 }
 
-
 static void rand_mpz(mpz_t out, gmp_randstate_t state, unsigned bits) {
     if (bits == 0) {
         mpz_set_ui(out, 0);
@@ -82,8 +68,6 @@ static void rand_mpz(mpz_t out, gmp_randstate_t state, unsigned bits) {
     }
 }
 
-
-
 static void test_init_and_basic(void) {
     printf("[TEST] init and basic conversions\n");
     BigInt *b = bigint_init();
@@ -95,7 +79,6 @@ static void test_init_and_basic(void) {
     char *s = bigint_to_str(b);
     assert(strcmp(s, "0") == 0);
     free(s);
-
 
     BigInt *a = bigint_init_from_uint64(0ULL, 1);
     check_invariants(a);
@@ -111,14 +94,16 @@ static void test_init_and_basic(void) {
     a = bigint_init_from_uint64(UINT64_MAX, 1);
     s = bigint_to_str(a);
 
-    mpz_t tmp; mpz_init(tmp); mpz_set_ui(tmp, 0);
+    mpz_t tmp;
+    mpz_init(tmp);
+    mpz_set_ui(tmp, 0);
     mpz_set_str(tmp, "18446744073709551615", 10);
     char *g = mpz_get_str(NULL, 10, tmp);
     assert(strcmp(g, s) == 0);
-    free(g); mpz_clear(tmp);
+    free(g);
+    mpz_clear(tmp);
     free(s);
     bigint_destroy(b);
-
 
     BigInt *p = bigint_init_from_str("0");
     assert(bigint_is_zero(p));
@@ -130,7 +115,6 @@ static void test_init_and_basic(void) {
     free(ns);
     check_invariants(n);
     bigint_destroy(n);
-
 
     BigInt *one = bigint_init();
     positive_one_bigint(one);
@@ -155,11 +139,12 @@ static void test_comparisons_and_cmp_uint_variants(gmp_randstate_t state) {
     assert(bigint_cmp_uint64(p, 12345ULL) == 0);
     assert(bigint_abs_cmp_uint64(p, 12345ULL) == 0);
     assert(bigint_cmp_int64(q, -12345LL) == 0);
-    bigint_destroy(z); bigint_destroy(p); bigint_destroy(q);
-
+    bigint_destroy(z);
+    bigint_destroy(p);
+    bigint_destroy(q);
 
     for (int i = 0; i < ITER; ++i) {
-        unsigned bits = (rand() % (MAX_BITS+1));
+        unsigned bits = (rand() % (MAX_BITS + 1));
         mpz_t A, B;
         mpz_inits(A, B, NULL);
         rand_mpz(A, state, bits);
@@ -167,28 +152,41 @@ static void test_comparisons_and_cmp_uint_variants(gmp_randstate_t state) {
         BigInt *a = bigint_from_mpz(A);
         BigInt *b = bigint_from_mpz(B);
 
-        mpz_t cmp; mpz_init(cmp);
+        mpz_t cmp;
+        mpz_init(cmp);
         int gcmp = mpz_cmp(A, B);
         int mycmp = bigint_cmp(a, b);
 
-        if (gcmp < 0) gcmp = -1;
-        else if (gcmp > 0) gcmp = 1;
-        if (mycmp < 0) mycmp = -1;
-        else if (mycmp > 0) mycmp = 1;
+        if (gcmp < 0)
+            gcmp = -1;
+        else if (gcmp > 0)
+            gcmp = 1;
+        if (mycmp < 0)
+            mycmp = -1;
+        else if (mycmp > 0)
+            mycmp = 1;
         if (mycmp != gcmp) {
             char *sa = bigint_to_str(a), *sb = bigint_to_str(b), *ga = mpz_to_str_dec(A), *gb = mpz_to_str_dec(B);
             failf("cmp mismatch: gmp(%s vs %s)=%d my(%s vs %s)=%d\n", ga, gb, gcmp, sa, sb, mycmp);
-            free(sa); free(sb); free(ga); free(gb);
+            free(sa);
+            free(sb);
+            free(ga);
+            free(gb);
         }
 
-
         int gabs = mpz_cmpabs(A, B);
-        if (gabs < 0) gabs = -1; else if (gabs > 0) gabs = 1;
-        int myabs = bigint_abs_cmp(a, b); if (myabs < 0) myabs = -1; else if (myabs > 0) myabs = 1;
+        if (gabs < 0)
+            gabs = -1;
+        else if (gabs > 0)
+            gabs = 1;
+        int myabs = bigint_abs_cmp(a, b);
+        if (myabs < 0)
+            myabs = -1;
+        else if (myabs > 0)
+            myabs = 1;
         if (gabs != myabs) {
             failf("abs cmp mismatch\n");
         }
-
 
         if (mpz_sizeinbase(A, 2) <= 64) {
             uint64_t v = mpz_get_ui(A);
@@ -196,20 +194,20 @@ static void test_comparisons_and_cmp_uint_variants(gmp_randstate_t state) {
             int rg;
 
             rg = mpz_cmp_ui(A, v);
-            if ((r<0?-1:(r>0?1:0)) != (rg<0?-1:(rg>0?1:0)))
-                failf("cmp_uint64 mismatch\n");
+            if ((r < 0 ? -1 : (r > 0 ? 1 : 0)) != (rg < 0 ? -1 : (rg > 0 ? 1 : 0))) failf("cmp_uint64 mismatch\n");
         }
         if (mpz_sizeinbase(A, 2) <= 63) {
             long rv = mpz_get_si(A);
             int r = bigint_cmp_int64(a, rv);
             int rg = mpz_cmp_si(A, rv);
-            if ((r<0?-1:(r>0?1:0)) != (rg<0?-1:(rg>0?1:0)))
-                failf("cmp_int64 mismatch\n");
+            if ((r < 0 ? -1 : (r > 0 ? 1 : 0)) != (rg < 0 ? -1 : (rg > 0 ? 1 : 0))) failf("cmp_int64 mismatch\n");
         }
 
-        check_invariants(a); check_invariants(b);
+        check_invariants(a);
+        check_invariants(b);
 
-        bigint_destroy(a); bigint_destroy(b);
+        bigint_destroy(a);
+        bigint_destroy(b);
         mpz_clears(A, B, cmp, NULL);
     }
     printf("  OK\n");
@@ -218,12 +216,10 @@ static void test_comparisons_and_cmp_uint_variants(gmp_randstate_t state) {
 static void test_add_sub(gmp_randstate_t state) {
     printf("[TEST] add / sub (uint32/uint64 / bigint)\n");
 
-
     BigInt *a = bigint_init_from_uint64(0xFFFFFFFFULL, 1);
     BigInt *b = bigint_init_from_uint64(1ULL, 1);
     BigInt *out = bigint_init();
     bigint_add(a, a, b);
-
 
     bigint_destroy(a);
     bigint_destroy(b);
@@ -240,20 +236,17 @@ static void test_add_sub(gmp_randstate_t state) {
         BigInt *b = bigint_from_mpz(B);
         BigInt *res = bigint_init();
 
-
         bigint_add(res, a, b);
         mpz_add(R, A, B);
         if (!compare_bigint_mpz(res, R)) {
             failf("add failed\n");
         }
 
-
         bigint_sub(res, a, b);
         mpz_sub(R, A, B);
         if (!compare_bigint_mpz(res, R)) {
             failf("sub failed\n");
         }
-
 
         uint32_t u32 = (uint32_t)(rand());
         bigint_add_uint32(res, a, u32);
@@ -272,12 +265,13 @@ static void test_add_sub(gmp_randstate_t state) {
         mpz_add(R, A, tmp64);
         mpz_clear(tmp64);
 
-        if (!compare_bigint_mpz(res, R))
-            failf("add_uint64 failed\n");
+        if (!compare_bigint_mpz(res, R)) failf("add_uint64 failed\n");
 
         check_invariants(res);
 
-        bigint_destroy(a); bigint_destroy(b); bigint_destroy(res);
+        bigint_destroy(a);
+        bigint_destroy(b);
+        bigint_destroy(res);
         mpz_clears(A, B, R, NULL);
     }
     printf("  OK\n");
@@ -286,28 +280,23 @@ static void test_add_sub(gmp_randstate_t state) {
 static void test_mul(gmp_randstate_t state) {
     printf("[TEST] multiplication (uint32 / bigint)\n");
 
-
     BigInt *z = bigint_init_from_str("0");
     BigInt *one = bigint_init_from_str("1");
     BigInt *minus_one = bigint_init_from_str("-1");
     BigInt *big = bigint_init_from_str("4294967296");
     BigInt *r = bigint_init();
 
-
     bigint_mul(r, z, big);
     assert(bigint_is_zero(r));
     check_invariants(r);
-
 
     bigint_mul(r, big, one);
     assert(strcmp(bigint_to_str(r), "4294967296") == 0);
     check_invariants(r);
 
-
     bigint_mul(r, big, minus_one);
     assert(strcmp(bigint_to_str(r), "-4294967296") == 0);
     check_invariants(r);
-
 
     bigint_mul(r, big, big);
     assert(strcmp(bigint_to_str(r), "18446744073709551616") == 0);
@@ -330,8 +319,11 @@ static void test_mul(gmp_randstate_t state) {
 
         bigint_mul(out, a, b);
         mpz_mul(R, A, B);
-        if (!compare_bigint_mpz(out, R)) failf("mul (bigint) failed\n");
-
+        if (!compare_bigint_mpz(out, R)) {
+            printf("a: %s\n", bigint_to_str(a));
+            printf("b: %s\n", bigint_to_str(b));
+            failf("mul (bigint) failed\n");
+        }
 
         uint32_t u = (uint32_t)(rand());
         bigint_mul_uint32(out, a, u);
@@ -340,7 +332,9 @@ static void test_mul(gmp_randstate_t state) {
 
         check_invariants(out);
 
-        bigint_destroy(a); bigint_destroy(b); bigint_destroy(out);
+        bigint_destroy(a);
+        bigint_destroy(b);
+        bigint_destroy(out);
         mpz_clears(A, B, R, NULL);
     }
 
@@ -367,7 +361,8 @@ static void test_shifts(gmp_randstate_t state) {
         if (!compare_bigint_mpz(out, R)) failf("shift_right failed (shift=%u)\n", shift);
 
         check_invariants(out);
-        bigint_destroy(a); bigint_destroy(out);
+        bigint_destroy(a);
+        bigint_destroy(out);
         mpz_clears(A, L, R, NULL);
     }
     printf("  OK\n");
@@ -405,15 +400,17 @@ static void test_division(gmp_randstate_t state) {
 
         unsigned long rem = mpz_tdiv_qr_ui(Q, R, A, (unsigned long)dv);
 
-        if (!compare_bigint_mpz(q, Q))
-            failf("div_uint32 quotient mismatch\n");
+        if (!compare_bigint_mpz(q, Q)) failf("div_uint32 quotient mismatch\n");
 
-        if (!compare_bigint_mpz(r, R))
-            failf("div_uint32 remainder mismatch\n");
+        if (!compare_bigint_mpz(r, R)) failf("div_uint32 remainder mismatch\n");
 
-        check_invariants(q); check_invariants(r);
+        check_invariants(q);
+        check_invariants(r);
 
-        bigint_destroy(a); bigint_destroy(b); bigint_destroy(q); bigint_destroy(r);
+        bigint_destroy(a);
+        bigint_destroy(b);
+        bigint_destroy(q);
+        bigint_destroy(r);
         mpz_clears(A, B, Q, R, NULL);
     }
     printf("  OK\n");
@@ -426,7 +423,8 @@ static void test_misc_and_stress_final(gmp_randstate_t state) {
         mpz_t accum_gmp;
         mpz_init(accum_gmp);
 
-        mpz_t cur; mpz_init(cur);
+        mpz_t cur;
+        mpz_init(cur);
         rand_mpz(cur, state, 1 + (rand() % MAX_BITS));
         mpz_set(accum_gmp, cur);
         BigInt *accum = bigint_from_mpz(cur);
@@ -434,7 +432,8 @@ static void test_misc_and_stress_final(gmp_randstate_t state) {
         int ops = 1 + (rand() % 50);
         for (int o = 0; o < ops; ++o) {
             int op = rand() % 6;
-            mpz_t other; mpz_init(other);
+            mpz_t other;
+            mpz_init(other);
             rand_mpz(other, state, 1 + (rand() % MAX_BITS));
             BigInt *other_b = bigint_from_mpz(other);
             switch (op) {
@@ -452,27 +451,21 @@ static void test_misc_and_stress_final(gmp_randstate_t state) {
                         mpz_mul(accum_gmp, accum_gmp, other);
                     }
                     break;
-                case 3:
-                {
+                case 3: {
                     unsigned sh = rand() % 256;
                     bigint_shift_left(accum, accum, sh);
                     mpz_mul_2exp(accum_gmp, accum_gmp, sh);
-                }
-                    break;
-                case 4:
-                {
+                } break;
+                case 4: {
                     unsigned sh = rand() % 256;
                     bigint_shift_right(accum, accum, sh);
                     mpz_tdiv_q_2exp(accum_gmp, accum_gmp, sh);
-                }
-                    break;
-                case 5:
-                {
+                } break;
+                case 5: {
                     uint32_t u = (uint32_t)rand();
                     bigint_add_uint32(accum, accum, u);
                     mpz_add_ui(accum_gmp, accum_gmp, (unsigned long)u);
-                }
-                    break;
+                } break;
             }
             check_invariants(accum);
             if (!compare_bigint_mpz(accum, accum_gmp)) {
@@ -506,5 +499,4 @@ int main(void) {
 
     gmp_randclear(state);
     printf("\nAll tests passed.\n");
-    return 0;
 }
