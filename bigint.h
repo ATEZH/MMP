@@ -22,7 +22,7 @@ void bigint_destroy(BigInt *bigint);
 
 void print_bigint_limbs(const BigInt *bigint);
 void print_bigint_limbs_binary(const BigInt *bigint);
-char* bigint_to_str(const BigInt *bigint);
+char *bigint_to_str(const BigInt *bigint);
 
 void zero_bigint(BigInt *bigint);
 void positive_one_bigint(BigInt *bigint);
@@ -55,4 +55,4 @@ void bigint_shift_right(BigInt *rop, const BigInt *op1, uint32_t bit_c);
 void bigint_div_uint32(BigInt *quotient, BigInt *remainder, const BigInt *op1, uint32_t op2);
 void bigint_div(BigInt *quotient, BigInt *remainder, const BigInt *op1, const BigInt *op2);
 
-#endif //MMP_BIGINT_H
+#endif  // MMP_BIGINT_H

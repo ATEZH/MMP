@@ -1,9 +1,10 @@
 #include "bigint.h"
 
+#include <assert.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <assert.h>
 
 /**
  * INVARIANTS:
@@ -28,15 +29,10 @@
 #define CHUNK_DIGITS 9
 
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
-#define BYTE_TO_BINARY(byte)  \
-  ((byte) & 0x80 ? '1' : '0'), \
-  ((byte) & 0x40 ? '1' : '0'), \
-  ((byte) & 0x20 ? '1' : '0'), \
-  ((byte) & 0x10 ? '1' : '0'), \
-  ((byte) & 0x08 ? '1' : '0'), \
-  ((byte) & 0x04 ? '1' : '0'), \
-  ((byte) & 0x02 ? '1' : '0'), \
-  ((byte) & 0x01 ? '1' : '0')
+#define BYTE_TO_BINARY(byte)                                                                   \
+    ((byte) & 0x80 ? '1' : '0'), ((byte) & 0x40 ? '1' : '0'), ((byte) & 0x20 ? '1' : '0'),     \
+        ((byte) & 0x10 ? '1' : '0'), ((byte) & 0x08 ? '1' : '0'), ((byte) & 0x04 ? '1' : '0'), \
+        ((byte) & 0x02 ? '1' : '0'), ((byte) & 0x01 ? '1' : '0')
 
 int is_space(char c);
 
@@ -62,10 +58,7 @@ void bigint_abs_add(BigInt *rop, const BigInt *op1, const BigInt *op2);
 
 void bigint_abs_sub(BigInt *rop, const BigInt *op1, const BigInt *op2);
 
-
-int is_space(char c) {
-    return c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r';
-}
+int is_space(char c) { return c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r'; }
 
 uint32_t count_ones(uint32_t x) {
     x = x - ((x >> 1) & 0x55555555);
@@ -150,15 +143,13 @@ int bigint_is_abs_one(const BigInt *bigint) {
 int bigint_cmp(const BigInt *op1, const BigInt *op2) {
     assert(op1 != NULL);
     assert(op2 != NULL);
-    if (op1 == op2)
-        return 0;
+    if (op1 == op2) return 0;
     if (op1->sign != op2->sign)
         return op1->sign;
     else if (op1->size != op2->size)
         return op1->size > op2->size ? op1->sign : -op1->sign;
     int i = op1->size - 1;
-    while (i >= 0 && op1->limbs[i] == op2->limbs[i])
-        i--;
+    while (i >= 0 && op1->limbs[i] == op2->limbs[i]) i--;
     if (i < 0)
         return 0;
     else
@@ -171,30 +162,25 @@ int bigint_cmp_uint64(const BigInt *op1, uint64_t op2) {
         return -1;
     else if (op1->size > 2)
         return 1;
-    uint64_t op1_magnitude = (uint64_t) op1->limbs[0] | ((op1->size == 2 ? (uint64_t) op1->limbs[1] : 0) << 32);
-    if (op1_magnitude == op2)
-        return 0;
+    uint64_t op1_magnitude = (uint64_t)op1->limbs[0] | ((op1->size == 2 ? (uint64_t)op1->limbs[1] : 0) << 32);
+    if (op1_magnitude == op2) return 0;
     return (op1_magnitude > op2) ? op1->sign : -op1->sign;
 }
 
 int bigint_cmp_int64(const BigInt *op1, int64_t op2) {
     assert(op1 != NULL);
-    if ((op1->sign == -1 && op2 >= 0) || (op1->sign == 1 && op2 < 0) || op1->size > 2)
-        return op1->sign;
-    uint64_t op1_magnitude = (uint64_t) op1->limbs[0] | ((op1->size == 2 ? (uint64_t) op1->limbs[1] : 0) << 32);
+    if ((op1->sign == -1 && op2 >= 0) || (op1->sign == 1 && op2 < 0) || op1->size > 2) return op1->sign;
+    uint64_t op1_magnitude = (uint64_t)op1->limbs[0] | ((op1->size == 2 ? (uint64_t)op1->limbs[1] : 0) << 32);
     uint64_t op2_magnitude = op2 * op1->sign;
-    if (op1_magnitude == op2_magnitude)
-        return 0;
+    if (op1_magnitude == op2_magnitude) return 0;
     return (op1_magnitude > op2_magnitude) ? op1->sign : -op1->sign;
 }
 
 int bigint_abs_cmp_uint64(const BigInt *op1, uint64_t op2) {
     assert(op1 != NULL);
-    if (op1->size > 2)
-        return 1;
-    uint64_t op1_magnitude = (uint64_t) op1->limbs[0] | ((op1->size == 2 ? (uint64_t) op1->limbs[1] : 0) << 32);
-    if (op1_magnitude == op2)
-        return 0;
+    if (op1->size > 2) return 1;
+    uint64_t op1_magnitude = (uint64_t)op1->limbs[0] | ((op1->size == 2 ? (uint64_t)op1->limbs[1] : 0) << 32);
+    if (op1_magnitude == op2) return 0;
     return (op1_magnitude > op2) ? 1 : -1;
 }
 
@@ -207,13 +193,10 @@ int bigint_abs_cmp_int64(const BigInt *op1, int64_t op2) {
 int bigint_abs_cmp(const BigInt *op1, const BigInt *op2) {
     assert(op1 != NULL);
     assert(op2 != NULL);
-    if (op1 == op2)
-        return 0;
-    if (op1->size != op2->size)
-        return op1->size > op2->size ? 1 : -1;
+    if (op1 == op2) return 0;
+    if (op1->size != op2->size) return op1->size > op2->size ? 1 : -1;
     int i = op1->size - 1;
-    while (i >= 0 && op1->limbs[i] == op2->limbs[i])
-        i--;
+    while (i >= 0 && op1->limbs[i] == op2->limbs[i]) i--;
     if (i < 0)
         return 0;
     else
@@ -228,7 +211,7 @@ void bigint_abs_add_uint32(BigInt *rop, const BigInt *op1, uint32_t op2) {
     if (rop->capacity <= rop->size + 1) {
         grow_capacity_to(rop, rop->size * 2);
     }
-    uint64_t result = (uint64_t) op1->limbs[0] + op2;
+    uint64_t result = (uint64_t)op1->limbs[0] + op2;
     uint8_t carry = UPPER_32_BITS(result);
     rop->limbs[0] = LOWER_32_BITS(result);
     int i = 1;
@@ -254,7 +237,7 @@ void bigint_abs_sub_uint32(BigInt *rop, const BigInt *op1, uint32_t op2) {
     if (rop->capacity <= rop->size + 1) {
         grow_capacity_to(rop, rop->size + 1);
     }
-    uint64_t result = (uint64_t) op1->limbs[0] - op2;
+    uint64_t result = (uint64_t)op1->limbs[0] - op2;
     rop->limbs[0] = LOWER_32_BITS(result);
     uint8_t borrow = (result >> 63) & 1;
     int i = 1;
@@ -322,7 +305,7 @@ void bigint_abs_add_uint64(BigInt *rop, const BigInt *op1, uint64_t op2) {
     if (rop->capacity <= rop->size + 1) {
         grow_capacity_to(rop, rop->size * 2);
     }
-    uint64_t first_two_limbs = ((uint64_t) op1->limbs[1] << 32) | op1->limbs[0];
+    uint64_t first_two_limbs = ((uint64_t)op1->limbs[1] << 32) | op1->limbs[0];
     uint64_t result = first_two_limbs + op2;
     uint8_t carry = result < first_two_limbs;
     rop->limbs[0] = LOWER_32_BITS(result);
@@ -353,7 +336,7 @@ void bigint_abs_sub_uint64(BigInt *rop, const BigInt *op1, uint64_t op2) {
     if (rop->capacity <= rop->size + 1) {
         grow_capacity_to(rop, rop->size + 1);
     }
-    uint64_t first_two_limbs = ((uint64_t) op1->limbs[1] << 32) | op1->limbs[0];
+    uint64_t first_two_limbs = ((uint64_t)op1->limbs[1] << 32) | op1->limbs[0];
     uint64_t result = first_two_limbs - op2;
     uint8_t borrow = result > first_two_limbs;
     rop->limbs[0] = LOWER_32_BITS(result);
@@ -388,7 +371,7 @@ void bigint_add_uint64(BigInt *rop, const BigInt *op1, uint64_t op2) {
             zero_bigint(rop);
             return;
         } else if (cmp == -1) {
-            uint64_t result = op2 - (((uint64_t) op1->limbs[1] << 32) | op1->limbs[0]);
+            uint64_t result = op2 - (((uint64_t)op1->limbs[1] << 32) | op1->limbs[0]);
             rop->limbs[0] = LOWER_32_BITS(result);
             rop->limbs[1] = UPPER_32_BITS(result);
             rop->size = (rop->limbs[1] > 0) + 1;
@@ -408,7 +391,7 @@ void bigint_sub_uint64(BigInt *rop, const BigInt *op1, uint64_t op2) {
             zero_bigint(rop);
             return;
         } else if (cmp == -1) {
-            uint64_t result = op2 - (((uint64_t) op1->limbs[1] << 32) | op1->limbs[0]);
+            uint64_t result = op2 - (((uint64_t)op1->limbs[1] << 32) | op1->limbs[0]);
             rop->limbs[0] = LOWER_32_BITS(result);
             rop->limbs[1] = UPPER_32_BITS(result);
             rop->size = (rop->limbs[1] > 0) + 1;
@@ -441,7 +424,7 @@ void bigint_abs_add(BigInt *rop, const BigInt *op1, const BigInt *op2) {
     uint64_t result = 0;
     int i = 0;
     for (; i < op2_size; i++) {
-        result = (uint64_t) op1->limbs[i] + op2->limbs[i] + carry;
+        result = (uint64_t)op1->limbs[i] + op2->limbs[i] + carry;
         rop->limbs[i] = LOWER_32_BITS(result);
         carry = UPPER_32_BITS(result);
     }
@@ -473,7 +456,7 @@ void bigint_abs_sub(BigInt *rop, const BigInt *op1, const BigInt *op2) {
     uint8_t borrow = 0;
     int i = 0;
     for (; i < op2_size; i++) {
-        result = (uint64_t) op1->limbs[i] - op2->limbs[i] - borrow;
+        result = (uint64_t)op1->limbs[i] - op2->limbs[i] - borrow;
         rop->limbs[i] = LOWER_32_BITS(result);
         borrow = (result >> 63) & 1;
     }
@@ -563,8 +546,8 @@ void bigint_shift_left(BigInt *rop, const BigInt *op1, uint32_t bit_c) {
     int i = op1_size + limb_shifts;
     rop->limbs[i] = op1->limbs[op1_size - 1] >> (31 - bit_shifts) >> 1;
     for (i -= 1; i >= limb_shifts + 1; i--) {
-        rop->limbs[i] = (op1->limbs[i - limb_shifts] << bit_shifts) |
-                        (op1->limbs[i - limb_shifts - 1] >> (31 - bit_shifts) >> 1);
+        rop->limbs[i] =
+            (op1->limbs[i - limb_shifts] << bit_shifts) | (op1->limbs[i - limb_shifts - 1] >> (31 - bit_shifts) >> 1);
     }
     rop->limbs[limb_shifts] = op1->limbs[0] << bit_shifts;
     for (i -= 1; i >= 0; i--) {
@@ -598,8 +581,8 @@ void bigint_shift_right(BigInt *rop, const BigInt *op1, uint32_t bit_c) {
     }
     int i = 0;
     for (; i < op1_size - limb_shifts - 1; i++) {
-        rop->limbs[i] = (op1->limbs[i + limb_shifts + 1] << (31 - bit_shifts) << 1) |
-                        (op1->limbs[i + limb_shifts] >> bit_shifts);
+        rop->limbs[i] =
+            (op1->limbs[i + limb_shifts + 1] << (31 - bit_shifts) << 1) | (op1->limbs[i + limb_shifts] >> bit_shifts);
     }
     rop->limbs[i] = op1->limbs[i + limb_shifts] >> bit_shifts;
     for (i += 1; i < old_size; i++) {
@@ -633,13 +616,186 @@ void bigint_mul_uint32(BigInt *rop, const BigInt *op1, uint32_t op2) {
     uint32_t carry = 0;
     uint64_t result = 0;
     for (int i = 0; i < op1_size; ++i) {
-        result = (uint64_t) (op2) * op1->limbs[i] + carry;
+        result = (uint64_t)(op2)*op1->limbs[i] + carry;
         rop->limbs[i] = LOWER_32_BITS(result);
         carry = UPPER_32_BITS(result);
     }
     if (carry) {
         rop->limbs[rop->size++] = carry;
     }
+}
+
+int karatsuba_z1(uint32_t *z3, int z3_size, const uint32_t *z2, int z2_size, const uint32_t *z0, int z0_size) {
+    int i = 0;
+    uint64_t result = 0;
+    uint32_t borrow = 0;
+    for (; i < z2_size; i++) {
+        result = (uint64_t)z3[i] - z2[i] - borrow;
+        z3[i] = LOWER_32_BITS(result);
+        borrow = (result >> 63) & 1;
+    }
+    for (; i < z3_size && borrow; i++) {
+        z3[i] -= borrow;
+        borrow = z3[i] == BASE - 1;
+    }
+    i = 0;
+    borrow = 0;
+    result = 0;
+    for (; i < z0_size; i++) {
+        result = (uint64_t)z3[i] - z0[i] - borrow;
+        z3[i] = LOWER_32_BITS(result);
+        borrow = (result >> 63) & 1;
+    }
+    for (; i < z3_size && borrow; i++) {
+        z3[i] -= borrow;
+        borrow = z3[i] == BASE - 1;
+    }
+    i = z3_size - 1;
+    for (; i >= 0; i--) {
+        if (z3[i] != 0) break;
+        z3_size--;
+    }
+    return z3_size;
+}
+
+int karatsuba_add_low_high(uint32_t *lph, int lph_size, const uint32_t *low, int low_size, const uint32_t *high,
+                           int high_size) {
+    uint32_t carry = 0;
+    int i = 0;
+    for (i = 0; i < low_size && i < high_size; i++) {
+        uint64_t result = (uint64_t)low[i] + high[i] + carry;
+        lph[i] = LOWER_32_BITS(result);
+        carry = UPPER_32_BITS(result);
+    }
+    for (; i < low_size; i++) {
+        uint64_t result = (uint64_t)low[i] + carry;
+        lph[i] = LOWER_32_BITS(result);
+        carry = UPPER_32_BITS(result);
+    }
+    for (; i < high_size; i++) {
+        uint64_t result = (uint64_t)high[i] + carry;
+        lph[i] = LOWER_32_BITS(result);
+        carry = UPPER_32_BITS(result);
+    }
+    if (carry) {
+        lph[i] = 1;
+        i++;
+    }
+    return i;
+}
+
+int karatsuba(uint32_t *rop, const uint32_t *op1, const int op1_size, const uint32_t *op2, const int op2_size) {
+    if (op1_size == 0 || op2_size == 0) {
+        return 0;
+    } else if (op1_size <= 10 || op2_size <= 10) {
+        for (int i = 0; i < op1_size; i++) {
+            uint64_t result = 0;
+            uint32_t carry = 0;
+            for (int j = 0; j < op2_size; j++) {
+                result = (uint64_t)(op1[i]) * op2[j] + rop[i + j] + carry;
+                rop[i + j] = LOWER_32_BITS(result);
+                carry = UPPER_32_BITS(result);
+            }
+            rop[op2_size + i] = carry;
+        }
+        int rop_size = op1_size + op2_size;
+        for (int i = rop_size - 1; i >= 0; i--) {
+            if (rop[i] != 0) break;
+            rop_size--;
+        }
+        return rop_size;
+    }
+    int rop_size = op1_size + op2_size;
+    int max_size = (op1_size > op2_size) ? op1_size : op2_size;
+    int half_size = (max_size + 1) / 2;
+
+    int low1_size = (op1_size > half_size) ? half_size : op1_size;
+    int low2_size = (op2_size > half_size) ? half_size : op2_size;
+
+    int high1_size = (op1_size > half_size) ? op1_size - half_size : 0;
+    int high2_size = (op2_size > half_size) ? op2_size - half_size : 0;
+
+    int lph1_size = 1 + ((low1_size > high1_size) ? low1_size : high1_size);
+    int lph2_size = 1 + ((low2_size > high2_size) ? low2_size : high2_size);
+    const uint32_t *high1 = op1 + ((high1_size > 0) ? low1_size : 0);
+    const uint32_t *low1 = op1;
+    const uint32_t *high2 = op2 + ((high2_size > 0) ? low2_size : 0);
+    const uint32_t *low2 = op2;
+
+    uint32_t *lph1 = calloc(lph1_size, sizeof(uint32_t));
+    if (lph1 == NULL) {
+        fprintf(stderr, "Fatal: Out of memory;\n");
+        abort();
+    }
+    uint32_t *lph2 = calloc(lph2_size, sizeof(uint32_t));
+    if (lph2 == NULL) {
+        fprintf(stderr, "Fatal: Out of memory;\n");
+        abort();
+    }
+    lph1_size = karatsuba_add_low_high(lph1, lph1_size, low1, low1_size, high1, high1_size);
+    lph2_size = karatsuba_add_low_high(lph2, lph2_size, low2, low2_size, high2, high2_size);
+
+    int z0_size = low1_size + low2_size + 1;
+    uint32_t *z0 = calloc(z0_size, sizeof(uint32_t));
+    if (z0 == NULL) {
+        fprintf(stderr, "Fatal: Out of memory;\n");
+        abort();
+    }
+    int z3_size = lph1_size + lph2_size + 1;
+    uint32_t *z3 = calloc(z3_size, sizeof(uint32_t));
+    if (z3 == NULL) {
+        fprintf(stderr, "Fatal: Out of memory;\n");
+        abort();
+    }
+    int z2_size = high1_size + high2_size + 1;
+    uint32_t *z2 = calloc(z2_size, sizeof(uint32_t));
+    if (z2 == NULL) {
+        fprintf(stderr, "Fatal: Out of memory;\n");
+        abort();
+    }
+
+    z0_size = karatsuba(z0, low1, low1_size, low2, low2_size);
+    z3_size = karatsuba(z3, lph1, lph1_size, lph2, lph2_size);
+    z2_size = karatsuba(z2, high1, high1_size, high2, high2_size);
+    int z1_size = karatsuba_z1(z3, z3_size, z2, z2_size, z0, z0_size);
+    uint32_t *z1 = z3;
+
+    int i;
+    for (i = 0; i < z0_size; i++) {
+        rop[i] = z0[i];
+    }
+    uint32_t carry = 0;
+    for (i = 0; i < z1_size; i++) {
+        uint64_t result = (uint64_t)rop[half_size + i] + z1[i] + carry;
+        rop[half_size + i] = LOWER_32_BITS(result);
+        carry = UPPER_32_BITS(result);
+    }
+    for (; i < rop_size && carry; i++) {
+        uint64_t result = (uint64_t)rop[half_size + i] + carry;
+        rop[half_size + i] = LOWER_32_BITS(result);
+        carry = UPPER_32_BITS(result);
+    }
+    carry = 0;
+    for (i = 0; i < z2_size; i++) {
+        uint64_t result = (uint64_t)rop[half_size * 2 + i] + z2[i] + carry;
+        rop[half_size * 2 + i] = LOWER_32_BITS(result);
+        carry = UPPER_32_BITS(result);
+    }
+    for (; i < rop_size && carry; i++) {
+        uint64_t result = (uint64_t)rop[half_size * 2 + i] + carry;
+        rop[half_size * 2 + i] = LOWER_32_BITS(result);
+        carry = UPPER_32_BITS(result);
+    }
+    for (i = rop_size - 1; i >= 0; i--) {
+        if (rop[i] != 0) break;
+        rop_size--;
+    }
+    free(lph1);
+    free(lph2);
+    free(z0);
+    free(z1);
+    free(z2);
+    return rop_size;
 }
 
 void bigint_mul(BigInt *rop, const BigInt *op1, const BigInt *op2) {
@@ -655,11 +811,41 @@ void bigint_mul(BigInt *rop, const BigInt *op1, const BigInt *op2) {
         rop->sign = sign;
         return;
     } else if (op1->size == 1 || op2->size == 1) {
-        bigint_mul_uint32(
-                rop,
-                op1->size == 1 ? op2 : op1,
-                op1->size == 1 ? op1->limbs[0] : op2->limbs[0]
-        );
+        bigint_mul_uint32(rop, op1->size == 1 ? op2 : op1, op1->size == 1 ? op1->limbs[0] : op2->limbs[0]);
+        rop->sign = sign;
+        return;
+    }
+    int op1_size = op1->size;
+    int op2_size = op2->size;
+    rop->size = op1_size + op2_size + 1;
+    rop->sign = sign;
+    if (rop->capacity <= rop->size + 1) {
+        rop->capacity = rop->size * 2;
+    }
+    uint32_t *new_limbs = calloc(rop->capacity, sizeof(uint32_t));
+    if (new_limbs == NULL) {
+        fprintf(stderr, "Fatal: Out of memory;\n");
+        abort();
+    }
+    rop->size = karatsuba(new_limbs, op1->limbs, op1_size, op2->limbs, op2_size);
+    free(rop->limbs);
+    rop->limbs = new_limbs;
+}
+// Traditional multiplication
+void old_bigint_mul(BigInt *rop, const BigInt *op1, const BigInt *op2) {
+    assert(rop != NULL);
+    assert(op1 != NULL);
+    assert(op2 != NULL);
+    int sign = (op1->sign == op2->sign) ? 1 : -1;
+    if (bigint_is_zero(op1) || bigint_is_zero(op2)) {
+        zero_bigint(rop);
+        return;
+    } else if (bigint_is_abs_one(op1) || bigint_is_abs_one(op2)) {
+        bigint_copy(rop, bigint_is_abs_one(op1) ? op2 : op1);
+        rop->sign = sign;
+        return;
+    } else if (op1->size == 1 || op2->size == 1) {
+        bigint_mul_uint32(rop, op1->size == 1 ? op2 : op1, op1->size == 1 ? op1->limbs[0] : op2->limbs[0]);
         rop->sign = sign;
         return;
     }
@@ -679,7 +865,7 @@ void bigint_mul(BigInt *rop, const BigInt *op1, const BigInt *op2) {
         uint64_t result = 0;
         uint32_t carry = 0;
         for (int j = 0; j < op1_size; j++) {
-            result = (uint64_t) (op1->limbs[j]) * op2->limbs[i] + new_limbs[i + j] + carry;
+            result = (uint64_t)(op1->limbs[j]) * op2->limbs[i] + new_limbs[i + j] + carry;
             new_limbs[i + j] = LOWER_32_BITS(result);
             carry = UPPER_32_BITS(result);
         }
@@ -711,7 +897,7 @@ void bigint_div_uint32(BigInt *quotient, BigInt *remainder, const BigInt *op1, u
     uint32_t d_remainder = 0;
     uint64_t dividend = 0;
     for (int32_t i = op1->size - 1; i >= 0; i--) {
-        dividend = ((uint64_t) d_remainder << 32) | op1->limbs[i];
+        dividend = ((uint64_t)d_remainder << 32) | op1->limbs[i];
         quotient->limbs[i] = dividend / op2;
         d_remainder = dividend % op2;
     }
@@ -780,7 +966,7 @@ void bigint_div(BigInt *quotient, BigInt *remainder, const BigInt *op1, const Bi
     for (int j = m - n; j >= 0; j--) {
         uint64_t q_hat = (dividend[j + n] * BASE + dividend[j + n - 1]) / divisor[n - 1];
         uint64_t r_hat = (dividend[j + n] * BASE + dividend[j + n - 1]) % divisor[n - 1];
-        while (q_hat >= BASE || (unsigned) q_hat * (uint64_t) divisor[n - 2] > BASE * r_hat + dividend[j + n - 2]) {
+        while (q_hat >= BASE || (unsigned)q_hat * (uint64_t)divisor[n - 2] > BASE * r_hat + dividend[j + n - 2]) {
             q_hat--;
             r_hat += divisor[n - 1];
             if (r_hat >= BASE) break;
@@ -789,7 +975,7 @@ void bigint_div(BigInt *quotient, BigInt *remainder, const BigInt *op1, const Bi
         int64_t result = 0;
         int64_t carry = 0;
         for (int i = 0; i < n; i++) {
-            product = (unsigned) q_hat * (uint64_t) divisor[i];
+            product = (unsigned)q_hat * (uint64_t)divisor[i];
             result = dividend[i + j] - (carry + LOWER_32_BITS(product));
             dividend[i + j] = result;
             carry = UPPER_32_BITS(product) - UPPER_32_BITS(result);
@@ -802,7 +988,7 @@ void bigint_div(BigInt *quotient, BigInt *remainder, const BigInt *op1, const Bi
             quotient->limbs[j]--;
             carry = 0;
             for (int i = 0; i < n; i++) {
-                result = (uint64_t) dividend[i + j] + divisor[i] + carry;
+                result = (uint64_t)dividend[i + j] + divisor[i] + carry;
                 dividend[i + j] = result;
                 carry = UPPER_32_BITS(result);
             }
@@ -851,8 +1037,7 @@ void bigint_destroy(BigInt *bigint) {
 void print_bigint_limbs(const BigInt *bigint) {
     assert(bigint != NULL);
     for (int i = bigint->size - 1; i >= 1; --i) {
-        if (bigint->limbs[i])
-            printf("%u*2^%d + ", bigint->limbs[i], i * 32);
+        if (bigint->limbs[i]) printf("%u*2^%d + ", bigint->limbs[i], i * 32);
     }
     printf("%u*2^%d\n", bigint->limbs[0], 0);
 }
@@ -861,7 +1046,8 @@ void print_bigint_limbs_binary(const BigInt *bigint) {
     assert(bigint != NULL);
     for (int i = bigint->size - 1; i >= 0; --i) {
         uint32_t l = bigint->limbs[i];
-        printf(""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN""BYTE_TO_BINARY_PATTERN" ",
+        printf("" BYTE_TO_BINARY_PATTERN "" BYTE_TO_BINARY_PATTERN "" BYTE_TO_BINARY_PATTERN "" BYTE_TO_BINARY_PATTERN
+               " ",
                BYTE_TO_BINARY(l >> 24), BYTE_TO_BINARY(l >> 16), BYTE_TO_BINARY(l >> 8), BYTE_TO_BINARY(l));
     }
     printf("\n");
@@ -871,7 +1057,7 @@ char *bigint_to_str(const BigInt *bigint) {
     assert(bigint != NULL);
     char *result;
     if (bigint_is_zero(bigint)) {
-        result = strdup("0");
+        result = _strdup("0");
         if (result == NULL) {
             fprintf(stderr, "Fatal: Out of memory;\n");
             abort();
@@ -906,7 +1092,7 @@ char *bigint_to_str(const BigInt *bigint) {
 
     bigint_destroy(temp);
     bigint_destroy(remainder);
-    result = strdup(ptr);
+    result = _strdup(ptr);
     free(str_buffer);
     if (result == NULL) {
         fprintf(stderr, "Fatal: Out of memory;\n");
@@ -979,15 +1165,14 @@ BigInt *bigint_init_from_str(char *str) {
         bigint->limbs[i] = 0;
     }
     size_t digits = strlen(str), i = 0;
-    while (i < digits && is_space(str[i]))
-        ++i;
+    while (i < digits && is_space(str[i])) ++i;
     int sign = str[i] == '-' ? -1 : 1;
     i += str[i] == '-' || str[i] == '+';
     size_t cutoff = digits - ((digits - i) / CHUNK_DIGITS) * CHUNK_DIGITS;
     for (; i < digits; cutoff += CHUNK_DIGITS) {
         uint32_t chunk = 0;
         for (; i < cutoff; ++i) {
-            if (str[i] < '0' || str[i] > '9') { // stop if a character that isn't a digit is encountered
+            if (str[i] < '0' || str[i] > '9') {  // stop if a character that isn't a digit is encountered
                 if (bigint_is_zero(bigint)) {
                     bigint->sign = 1;
                 }
