@@ -687,7 +687,7 @@ int karatsuba_add_low_high(uint32_t *lph, int lph_size, const uint32_t *low, int
 int karatsuba(uint32_t *rop, const uint32_t *op1, const int op1_size, const uint32_t *op2, const int op2_size) {
     if (op1_size == 0 || op2_size == 0) {
         return 0;
-    } else if (op1_size <= 10 || op2_size <= 10) {
+    } else if (op1_size <= 40 || op2_size <= 40) {
         for (int i = 0; i < op1_size; i++) {
             uint64_t result = 0;
             uint32_t carry = 0;
@@ -719,7 +719,7 @@ int karatsuba(uint32_t *rop, const uint32_t *op1, const int op1_size, const uint
     int lph2_size = 1 + ((low2_size > high2_size) ? low2_size : high2_size);
     int z0_size = low1_size + low2_size;
     int z3_size = lph1_size + lph2_size;
-    int z2_size = high1_size + high2_size;
+    int z2_size = (high1_size > 0 && high2_size > 0) ? high1_size + high2_size : 0;
 
     const uint32_t *high1 = op1 + ((high1_size > 0) ? low1_size : 0);
     const uint32_t *low1 = op1;
