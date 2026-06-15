@@ -717,42 +717,28 @@ int karatsuba(uint32_t *rop, const uint32_t *op1, const int op1_size, const uint
 
     int lph1_size = 1 + ((low1_size > high1_size) ? low1_size : high1_size);
     int lph2_size = 1 + ((low2_size > high2_size) ? low2_size : high2_size);
+    int z0_size = low1_size + low2_size;
+    int z3_size = lph1_size + lph2_size;
+    int z2_size = high1_size + high2_size;
+
     const uint32_t *high1 = op1 + ((high1_size > 0) ? low1_size : 0);
     const uint32_t *low1 = op1;
     const uint32_t *high2 = op2 + ((high2_size > 0) ? low2_size : 0);
     const uint32_t *low2 = op2;
 
-    uint32_t *lph1 = calloc(lph1_size, sizeof(uint32_t));
-    if (lph1 == NULL) {
+    int work_buffer_size = lph1_size + lph2_size + z0_size + z3_size + z2_size;
+    uint32_t *work_buffer = calloc(work_buffer_size, sizeof(uint32_t));
+    if (work_buffer == NULL) {
         fprintf(stderr, "Fatal: Out of memory;\n");
         abort();
     }
-    uint32_t *lph2 = calloc(lph2_size, sizeof(uint32_t));
-    if (lph2 == NULL) {
-        fprintf(stderr, "Fatal: Out of memory;\n");
-        abort();
-    }
+    uint32_t *lph1 = work_buffer;
+    uint32_t *lph2 = lph1 + lph1_size;
+    uint32_t *z0 = lph2 + lph2_size;
+    uint32_t *z3 = z0 + z0_size;
+    uint32_t *z2 = z3 + z3_size;
     lph1_size = karatsuba_add_low_high(lph1, lph1_size, low1, low1_size, high1, high1_size);
     lph2_size = karatsuba_add_low_high(lph2, lph2_size, low2, low2_size, high2, high2_size);
-
-    int z0_size = low1_size + low2_size + 1;
-    uint32_t *z0 = calloc(z0_size, sizeof(uint32_t));
-    if (z0 == NULL) {
-        fprintf(stderr, "Fatal: Out of memory;\n");
-        abort();
-    }
-    int z3_size = lph1_size + lph2_size + 1;
-    uint32_t *z3 = calloc(z3_size, sizeof(uint32_t));
-    if (z3 == NULL) {
-        fprintf(stderr, "Fatal: Out of memory;\n");
-        abort();
-    }
-    int z2_size = high1_size + high2_size + 1;
-    uint32_t *z2 = calloc(z2_size, sizeof(uint32_t));
-    if (z2 == NULL) {
-        fprintf(stderr, "Fatal: Out of memory;\n");
-        abort();
-    }
 
     z0_size = karatsuba(z0, low1, low1_size, low2, low2_size);
     z3_size = karatsuba(z3, lph1, lph1_size, lph2, lph2_size);
@@ -790,11 +776,7 @@ int karatsuba(uint32_t *rop, const uint32_t *op1, const int op1_size, const uint
         if (rop[i] != 0) break;
         rop_size--;
     }
-    free(lph1);
-    free(lph2);
-    free(z0);
-    free(z1);
-    free(z2);
+    free(work_buffer);
     return rop_size;
 }
 
